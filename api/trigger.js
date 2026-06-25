@@ -7,12 +7,11 @@ const WF_SMS       = '1803b643-fc48-4f8e-a98a-a7728878320e';
 
 function ghlReq(method, path, body, params) {
   return new Promise((resolve) => {
-    let url = 'services.leadconnectorhq.com';
     let fullPath = path;
     if (params) fullPath += '?' + new URLSearchParams(params).toString();
     const data = body ? JSON.stringify(body) : null;
     const opts = {
-      hostname: url, path: fullPath, method,
+      hostname: 'services.leadconnectorhq.com', path: fullPath, method,
       headers: {
         'Authorization': `Bearer ${GHL_PIT}`,
         'Version': '2023-02-21',
