@@ -25,8 +25,8 @@
   .btn-call { background: #6c6cff; color: #fff; }
   .btn-sms  { background: #1e8a4a; color: #fff; }
   .btn-both { background: linear-gradient(135deg,#6c6cff,#1e8a4a); color: #fff; flex: 2; }
-  .btn-reset { background: #3a1a1a; color: #f87171; border: 1px solid #5a2a2a; flex: 1 1 100%; margin-top: 8px; }
-  .btn-reset:hover { background: #5a2020; }
+  .btn-reset { background: linear-gradient(135deg,#e53e3e,#c41e1e); color: #fff; border: none; width: 100%; margin-top: 20px; }
+  .btn-reset:hover { opacity: .85; }
   .log { margin-top: 24px; background: #111116; border: 1px solid #1e1e26; border-radius: 10px; padding: 14px; font-size: 13px; min-height: 80px; max-height: 220px; overflow-y: auto; font-family: monospace; color: #aaa; }
   .log .ok  { color: #4ade80; }
   .log .err { color: #f87171; }
@@ -82,8 +82,8 @@
     <button class="btn-call" onclick="trigger('call')">📞 Call</button>
     <button class="btn-sms"  onclick="trigger('sms')">💬 SMS</button>
     <button class="btn-both" onclick="trigger('both')">🚀 Both</button>
-    <button class="btn-reset" onclick="resetContact()">🗑 Borrar memoria y empezar de cero</button>
-  </div>
+    </div>
+  <button class="btn-reset" onclick="resetContact()">🗑 Reset — Delete Contact & Clear Memory</button>
 
   <div class="log" id="log"><span class="inf">Ready.</span></div>
 </div>
