@@ -1,6 +1,7 @@
 import json
 import urllib.request
 import urllib.parse
+from http.server import BaseHTTPRequestHandler
 
 GHL_PIT      = "pit-d977607c-f9e5-4a92-8b48-07d2ea342d79"
 GHL_LOCATION = "KDMRygh4EQxW5HYf5SZu"
@@ -47,35 +48,46 @@ def add_to_workflow(contact_id, workflow_id):
         {"eventStartTime": None})
     return status in (200, 201, 202), status
 
-def handler(request):
-    if request.method == "OPTIONS":
-        return Response("", status=200, headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST",
-            "Access-Control-Allow-Headers": "Content-Type"
-        })
-    body = json.loads(request.body)
-    first_name = body.get("first_name", "")
-    last_name  = body.get("last_name", "")
-    phone      = body.get("phone", "")
-    action     = body.get("action", "both")
-    steps = []
+class handler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
 
-    contact_id, created = get_or_create_contact(first_name, last_name, phone)
-    if contact_id:
-        steps.append({"ok": True, "msg": f"Contact {'created' if created else 'found'}: {contact_id}"})
-    else:
-        steps.append({"ok": False, "msg": "Failed to create/find contact"})
-        return Response(json.dumps({"steps": steps}), status=200,
-            headers={"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"})
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", 0))
+        body = json.loads(self.rfile.read(length))
+        first_name = body.get("first_name", "")
+        last_name  = body.get("last_name", "")
+        phone      = body.get("phone", "")
+        action     = body.get("action", "both")
+        steps = []
 
-    if action in ("call", "both"):
-        ok, status = add_to_workflow(contact_id, WF_CALL)
-        steps.append({"ok": ok, "msg": f"Call workflow: {'OK' if ok else 'FAILED'} ({status})"})
+        contact_id, created = get_or_create_contact(first_name, last_name, phone)
+        if contact_id:
+            steps.append({"ok": True, "msg": f"Contact {'created' if created else 'found'}: {contact_id}"})
+        else:
+            steps.append({"ok": False, "msg": "Failed to create/find contact"})
+            self._respond({"steps": steps})
+            return
 
-    if action in ("sms", "both"):
-        ok, status = add_to_workflow(contact_id, WF_SMS)
-        steps.append({"ok": ok, "msg": f"SMS workflow: {'OK' if ok else 'FAILED'} ({status})"})
+        if action in ("call", "both"):
+            ok, status = add_to_workflow(contact_id, WF_CALL)
+            steps.append({"ok": ok, "msg": f"Call workflow: {'OK' if ok else 'FAILED'} ({status})"})
 
-    return Response(json.dumps({"steps": steps}), status=200,
-        headers={"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"})
+        if action in ("sms", "both"):
+            ok, status = add_to_workflow(contact_id, WF_SMS)
+            steps.append({"ok": ok, "msg": f"SMS workflow: {'OK' if ok else 'FAILED'} ({status})"})
+
+        self._respond({"steps": steps})
+
+    def _respond(self, data):
+        payload = json.dumps(data).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
