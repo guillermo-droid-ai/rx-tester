@@ -14,17 +14,24 @@
   label { display: block; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; margin-top: 18px; }
   input { width: 100%; background: #111116; border: 1px solid #2a2a32; border-radius: 8px; color: #e8e8ed; padding: 12px 14px; font-size: 15px; outline: none; transition: border .2s; }
   input:focus { border-color: #6c6cff; }
-  .actions { display: flex; gap: 10px; margin-top: 28px; }
-  button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .phone-wrap { display: flex; gap: 8px; }
+  .phone-wrap select { background: #111116; border: 1px solid #2a2a32; border-radius: 8px; color: #e8e8ed; padding: 12px 10px; font-size: 14px; outline: none; cursor: pointer; flex-shrink: 0; }
+  .phone-wrap select:focus { border-color: #6c6cff; }
+  .phone-wrap input { flex: 1; }
+  .actions { display: flex; gap: 10px; margin-top: 28px; flex-wrap: wrap; }
+  button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; min-width: 80px; }
   button:active { opacity: .8; }
   button:disabled { opacity: .4; cursor: not-allowed; }
   .btn-call { background: #6c6cff; color: #fff; }
   .btn-sms  { background: #1e8a4a; color: #fff; }
   .btn-both { background: linear-gradient(135deg,#6c6cff,#1e8a4a); color: #fff; flex: 2; }
+  .btn-reset { background: #3a1a1a; color: #f87171; border: 1px solid #5a2a2a; flex: 1 1 100%; margin-top: 8px; }
+  .btn-reset:hover { background: #5a2020; }
   .log { margin-top: 24px; background: #111116; border: 1px solid #1e1e26; border-radius: 10px; padding: 14px; font-size: 13px; min-height: 80px; max-height: 220px; overflow-y: auto; font-family: monospace; color: #aaa; }
   .log .ok  { color: #4ade80; }
   .log .err { color: #f87171; }
   .log .inf { color: #93c5fd; }
+  .divider { border: none; border-top: 1px solid #2a2a32; margin-top: 24px; }
 </style>
 </head>
 <body>
@@ -38,13 +45,44 @@
   <label>Last Name</label>
   <input id="last_name" type="text" placeholder="Test" />
 
-  <label>Phone (E.164)</label>
-  <input id="phone" type="tel" placeholder="+15551234567" />
+  <label>Phone</label>
+  <div class="phone-wrap">
+    <select id="country_code">
+      <option value="+1">🇺🇸 +1</option>
+      <option value="+1">🇨🇦 +1</option>
+      <option value="+44">🇬🇧 +44</option>
+      <option value="+52">🇲🇽 +52</option>
+      <option value="+503">🇸🇻 +503</option>
+      <option value="+502">🇬🇹 +502</option>
+      <option value="+504">🇭🇳 +504</option>
+      <option value="+505">🇳🇮 +505</option>
+      <option value="+506">🇨🇷 +506</option>
+      <option value="+507">🇵🇦 +507</option>
+      <option value="+57">🇨🇴 +57</option>
+      <option value="+58">🇻🇪 +58</option>
+      <option value="+51">🇵🇪 +51</option>
+      <option value="+56">🇨🇱 +56</option>
+      <option value="+54">🇦🇷 +54</option>
+      <option value="+55">🇧🇷 +55</option>
+      <option value="+961">🇱🇧 +961</option>
+      <option value="+971">🇦🇪 +971</option>
+      <option value="+966">🇸🇦 +966</option>
+      <option value="+20">🇪🇬 +20</option>
+      <option value="+49">🇩🇪 +49</option>
+      <option value="+33">🇫🇷 +33</option>
+      <option value="+34">🇪🇸 +34</option>
+      <option value="+39">🇮🇹 +39</option>
+      <option value="+91">🇮🇳 +91</option>
+      <option value="+61">🇦🇺 +61</option>
+    </select>
+    <input id="phone" type="tel" placeholder="4075596761" />
+  </div>
 
   <div class="actions">
     <button class="btn-call" onclick="trigger('call')">📞 Call</button>
     <button class="btn-sms"  onclick="trigger('sms')">💬 SMS</button>
     <button class="btn-both" onclick="trigger('both')">🚀 Both</button>
+    <button class="btn-reset" onclick="resetContact()">🗑 Borrar memoria y empezar de cero</button>
   </div>
 
   <div class="log" id="log"><span class="inf">Ready.</span></div>
@@ -58,19 +96,26 @@ function log(msg, cls='inf') {
   el.scrollTop = el.scrollHeight;
 }
 function setLoading(on) { btns.forEach(b => b.disabled = on); }
+
+function getPhone() {
+  const cc = document.getElementById('country_code').value;
+  const raw = document.getElementById('phone').value.trim().replace(/\D/g,'');
+  if (!raw) return null;
+  return cc + raw;
+}
+
 async function trigger(action) {
   const first_name = document.getElementById('first_name').value.trim();
   const last_name  = document.getElementById('last_name').value.trim();
-  const phone      = document.getElementById('phone').value.trim();
+  const phone = getPhone();
   if (!first_name || !phone) { log('⚠ First name and phone are required.', 'err'); return; }
-  const cleanPhone = phone.startsWith('+') ? phone : '+' + phone.replace(/\D/g,'');
   setLoading(true);
-  log(`→ Triggering [${action}] for ${first_name} ${last_name} ${cleanPhone}…`);
+  log(`→ Triggering [${action}] for ${first_name} ${phone}…`);
   try {
     const res = await fetch('/api/trigger', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({first_name, last_name, phone: cleanPhone, action})
+      body: JSON.stringify({first_name, last_name, phone, action})
     });
     const data = await res.json();
     if (data.steps) {
@@ -78,9 +123,29 @@ async function trigger(action) {
     } else {
       log(data.error || 'Unknown error', 'err');
     }
-  } catch(e) {
-    log('Network error: ' + e.message, 'err');
-  }
+  } catch(e) { log('Network error: ' + e.message, 'err'); }
+  setLoading(false);
+}
+
+async function resetContact() {
+  const phone = getPhone();
+  if (!phone) { log('⚠ Enter a phone number first.', 'err'); return; }
+  if (!confirm(`Delete GHL contact and Supabase history for ${phone}?`)) return;
+  setLoading(true);
+  log(`→ Resetting ${phone}…`);
+  try {
+    const res = await fetch('/api/reset', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({phone})
+    });
+    const data = await res.json();
+    if (data.steps) {
+      for (const s of data.steps) log(s.msg, s.ok ? 'ok' : 'err');
+    } else {
+      log(data.error || 'Unknown error', 'err');
+    }
+  } catch(e) { log('Network error: ' + e.message, 'err'); }
   setLoading(false);
 }
 </script>
