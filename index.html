@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RemotelyX — Test Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f11; color: #e8e8ed; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .card { background: #1a1a1f; border: 1px solid #2a2a32; border-radius: 16px; padding: 40px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .logo { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .logo span { color: #6c6cff; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 32px; }
+  label { display: block; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; margin-top: 18px; }
+  input { width: 100%; background: #111116; border: 1px solid #2a2a32; border-radius: 8px; color: #e8e8ed; padding: 12px 14px; font-size: 15px; outline: none; transition: border .2s; }
+  input:focus { border-color: #6c6cff; }
+  .actions { display: flex; gap: 10px; margin-top: 28px; }
+  button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  button:active { opacity: .8; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-call { background: #6c6cff; color: #fff; }
+  .btn-sms  { background: #1e8a4a; color: #fff; }
+  .btn-both { background: linear-gradient(135deg,#6c6cff,#1e8a4a); color: #fff; flex: 2; }
+  .log { margin-top: 24px; background: #111116; border: 1px solid #1e1e26; border-radius: 10px; padding: 14px; font-size: 13px; min-height: 80px; max-height: 220px; overflow-y: auto; font-family: monospace; color: #aaa; }
+  .log .ok  { color: #4ade80; }
+  .log .err { color: #f87171; }
+  .log .inf { color: #93c5fd; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Remotely<span>X</span></div>
+  <div class="subtitle">Test Panel — Add contact to automation</div>
+
+  <label>First Name</label>
+  <input id="first_name" type="text" placeholder="Layan" />
+
+  <label>Last Name</label>
+  <input id="last_name" type="text" placeholder="Test" />
+
+  <label>Phone (E.164)</label>
+  <input id="phone" type="tel" placeholder="+15551234567" />
+
+  <div class="actions">
+    <button class="btn-call" onclick="trigger('call')">📞 Call</button>
+    <button class="btn-sms"  onclick="trigger('sms')">💬 SMS</button>
+    <button class="btn-both" onclick="trigger('both')">🚀 Both</button>
+  </div>
+
+  <div class="log" id="log"><span class="inf">Ready.</span></div>
+</div>
+
+<script>
+const btns = document.querySelectorAll('button');
+function log(msg, cls='inf') {
+  const el = document.getElementById('log');
+  el.innerHTML += `<div class="${cls}">${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+function setLoading(on) { btns.forEach(b => b.disabled = on); }
+async function trigger(action) {
+  const first_name = document.getElementById('first_name').value.trim();
+  const last_name  = document.getElementById('last_name').value.trim();
+  const phone      = document.getElementById('phone').value.trim();
+  if (!first_name || !phone) { log('⚠ First name and phone are required.', 'err'); return; }
+  const cleanPhone = phone.startsWith('+') ? phone : '+' + phone.replace(/\D/g,'');
+  setLoading(true);
+  log(`→ Triggering [${action}] for ${first_name} ${last_name} ${cleanPhone}…`);
+  try {
+    const res = await fetch('/api/trigger', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({first_name, last_name, phone: cleanPhone, action})
+    });
+    const data = await res.json();
+    if (data.steps) {
+      for (const s of data.steps) log(s.msg, s.ok ? 'ok' : 'err');
+    } else {
+      log(data.error || 'Unknown error', 'err');
+    }
+  } catch(e) {
+    log('Network error: ' + e.message, 'err');
+  }
+  setLoading(false);
+}
+</script>
+</body>
+</html>
