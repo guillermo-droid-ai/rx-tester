@@ -3,7 +3,7 @@ const https = require('https');
 const GHL_PIT      = 'pit-d977607c-f9e5-4a92-8b48-07d2ea342d79';
 const GHL_LOCATION = 'KDMRygh4EQxW5HYf5SZu';
 const SUPA_URL     = 'inxwustdvklxopwqhqkk.supabase.co';
-const SUPA_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlueHd1c3RkdmtseG9wd3FocWtrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODY1OTMxNywiZXhwIjoyMDc0MjM1MzE3fQ.MMfFCCpNVg5i-QKW6Iy7FqVCD-KzxPhxG3Ddep9OJQw';
+const SUPA_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlueHd1c3RkdmtseG9wd3FocWtrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODY1OTMxNywiZXhwIjoyMDc0MjM1MzE3fQ.gqxljoNFRCh-J4geDXS_sCLuFHEv58KZe7gN9Vl4OJQw';
 
 function req(hostname, path, method, headers, body) {
   return new Promise((resolve) => {
@@ -47,7 +47,7 @@ module.exports = async (request, res) => {
   // 2. Delete Supabase rows
   const encoded = encodeURIComponent(phone);
   const supa = await req(SUPA_URL, `/rest/v1/sms_history?sender_id=eq.${encoded}`, 'DELETE',
-    {'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json'});
+    {'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'});
   steps.push({ok: supa.status === 204, msg: `Supabase history: ${supa.status === 204 ? 'cleared' : 'FAILED (' + supa.status + ')'}`});
 
   res.json({steps});
